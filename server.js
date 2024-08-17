@@ -3,9 +3,13 @@ const WebSocket = require('ws');
 const { spawn } = require('child_process');
 
 const app = express();
+
 // const host = "192.168.1.6";
-const host = "0.0.0.0";
+// const host = "0.0.0.0";
+const host = "localhost";
 const port = 4550;
+const rtmpUrl = 'rtmp://94.100.26.141/live/test';
+const localRtmp = 'rtmp://localhost/live/test';
 
 const server = app.listen(port, host, () => {
   console.log(`Server is running on http://${host}:${port}`);
@@ -13,17 +17,22 @@ const server = app.listen(port, host, () => {
 
 const wss = new WebSocket.Server({ server });
 
-wss.on('connection', (ws) => {
-  console.log('Client connected');
-
-  const rtmpUrl = 'rtmp://94.100.26.141/live/test';
-  const ffmpeg = spawn('ffmpeg', [
+function spawnFFMPEG(url) {
+  return spawn('ffmpeg', [
     '-re',
     '-i', 'pipe:0',
     '-c:v', 'libx264',
     '-f', 'flv',
-    rtmpUrl
+    '-flvflags', 'no_duration_filesize',  // Avoid freezing when input is inconsistent
+    '-fflags', '+nobuffer',  // Disable buffering to avoid input delay
+    url
   ]);
+}
+
+wss.on('connection', (ws) => {
+  console.log('Client connected');
+
+  const ffmpeg = spawnFFMPEG(localRtmp);
 
   ws.on('message', (message) => {
     if (Buffer.isBuffer(message)) {
