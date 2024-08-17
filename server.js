@@ -4,8 +4,8 @@ const { spawn } = require('child_process');
 
 const app = express();
 // const host = "192.168.1.6";
-const host = "localhost";
-const port = 3000;
+const host = "0.0.0.0";
+const port = 4550;
 
 const server = app.listen(port, host, () => {
   console.log(`Server is running on http://${host}:${port}`);
@@ -16,7 +16,7 @@ const wss = new WebSocket.Server({ server });
 wss.on('connection', (ws) => {
   console.log('Client connected');
 
-  const rtmpUrl = `rtmp://${host}/live/test`;
+  const rtmpUrl = 'rtmp://94.100.26.141/live/test';
   const ffmpeg = spawn('ffmpeg', [
     '-re',
     '-i', 'pipe:0',
