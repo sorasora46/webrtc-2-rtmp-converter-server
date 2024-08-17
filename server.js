@@ -18,7 +18,7 @@ const server = app.listen(port, host, () => {
 const wss = new WebSocket.Server({ server });
 
 function spawnFFMPEG(url) {
-  return spawn('ffmpeg', [
+  const ffmpeg = spawn('ffmpeg', [
     '-re',
     '-i', 'pipe:0',
     '-c:v', 'libx264',
@@ -27,6 +27,16 @@ function spawnFFMPEG(url) {
     '-fflags', '+nobuffer',  // Disable buffering to avoid input delay
     url
   ]);
+
+  ffmpeg.on('error', (error) => {
+    console.error(`ffmpeg error: ${error.message}`);
+  });
+
+  ffmpeg.on('close', (code) => {
+    console.log(`ffmpeg process exited with code ${code}`);
+  });
+
+  return ffmpeg;
 }
 
 wss.on('connection', (ws) => {
@@ -54,12 +64,5 @@ wss.on('connection', (ws) => {
     ffmpeg.stdin = null;
   });
 
-  ffmpeg.on('error', (error) => {
-    console.error(`ffmpeg error: ${error.message}`);
-  });
-
-  ffmpeg.on('close', (code) => {
-    console.log(`ffmpeg process exited with code ${code}`);
-  });
 
 });
