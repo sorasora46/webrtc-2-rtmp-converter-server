@@ -1,0 +1,55 @@
+const express = require('express');
+const WebSocket = require('ws');
+const fs = require('fs');
+const { exec } = require('child_process');
+
+const app = express();
+const port = 3000;
+
+const server = app.listen(port, () => {
+  console.log(`Server is running on http://localhost:${port}`);
+});
+
+const wss = new WebSocket.Server({ server });
+
+wss.on('connection', (ws) => {
+  console.log('Client connected');
+
+  // Create a write stream for saving incoming data
+  const filePath = `stream-${Date.now()}.webm`;
+  const writeStream = fs.createWriteStream(filePath);
+
+  ws.on('message', (message) => {
+    // Handle incoming media stream data
+    console.log('Received message from client');
+
+    // Ensure the message is binary data
+    if (Buffer.isBuffer(message)) {
+      writeStream.write(message);
+    } else {
+      console.error('Received non-binary message');
+    }
+  });
+
+  ws.on('close', () => {
+    console.log('Client disconnected');
+    // Close the write stream
+    writeStream.end(() => {
+      // Convert the .webm file to .mp4 using ffmpeg after closing the stream
+      const outputFile = filePath.replace('.webm', '.mp4');
+
+      exec(`ffmpeg -i ${filePath} ${outputFile}`, (error, stdout, stderr) => {
+        if (error) {
+          console.error(`Error converting file: ${error.message}`);
+          return;
+        }
+        console.log(`File converted: ${outputFile}`);
+      });
+    });
+  });
+
+  ws.on('error', (error) => {
+    console.error(`WebSocket error: ${error.message}`);
+    writeStream.end();
+  });
+});
