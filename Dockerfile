@@ -17,11 +17,7 @@ RUN apt-get update && apt-get install -y ffmpeg
 COPY . .
 
 # Expose the port that the app will run on (9882 in this case)
-EXPOSE 9882
-
-# Set environment variables
-ENV HOST=0.0.0.0
-ENV PORT=9882
+EXPOSE 4550
 
 # Run the application
 CMD ["npm", "start"]
