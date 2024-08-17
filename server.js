@@ -24,11 +24,7 @@ wss.on('connection', (ws) => {
     '-f', 'flv',
     rtmpUrl
   ]);
-  ffmpeg.setMaxListeners(10);
 
-  const messageQueue = [];
-
-  // Pipe incoming WebSocket data to ffmpeg stdin
   ws.on('message', (message) => {
     if (Buffer.isBuffer(message)) {
       ffmpeg.stdin.write(message)
