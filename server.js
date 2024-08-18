@@ -23,8 +23,8 @@ function spawnFFMPEG(url) {
     '-i', 'pipe:0',
     '-c:v', 'libx264',
     '-f', 'flv',
-    '-flvflags', 'no_duration_filesize',  // Avoid freezing when input is inconsistent
-    '-fflags', '+nobuffer',  // Disable buffering to avoid input delay
+    '-flvflags', 'no_duration_filesize',
+    '-fflags', '+nobuffer',
     url
   ]);
 
@@ -42,7 +42,10 @@ function spawnFFMPEG(url) {
 wss.on('connection', (ws) => {
   console.log('Client connected');
 
-  const ffmpeg = spawnFFMPEG(localRtmp);
+  let ffmpeg = spawnFFMPEG(localRtmp);
+  if (ffmpeg) {
+    console.log('ffmpeg process created')
+  }
 
   ws.on('message', (message) => {
     if (Buffer.isBuffer(message)) {
