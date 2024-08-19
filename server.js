@@ -1,11 +1,8 @@
 const express = require('express');
+const WebSocket = require('ws');
 const { spawn } = require('child_process');
-const http = require('http');
-const socketIO = require('socket.io');
 
 const app = express();
-const server = http.createServer(app);
-const io = socketIO(server);
 
 // const host = "192.168.1.6";
 // const host = "0.0.0.0";
@@ -14,9 +11,11 @@ const port = 4550;
 const rtmpUrl = 'rtmp://94.100.26.141/live/test';
 const localRtmp = 'rtmp://localhost/live/test';
 
-server.listen(port, host, () => {
+const server = app.listen(port, host, () => {
   console.log(`Server is running on http://${host}:${port}`);
 });
+
+const wss = new WebSocket.Server({ server });
 
 function spawnFFMPEG(url) {
   const ffmpeg = spawn('ffmpeg', [
@@ -40,32 +39,32 @@ function spawnFFMPEG(url) {
   return ffmpeg;
 }
 
-io.on('connection', (socket) => {
+wss.on('connection', (ws) => {
   console.log('Client connected');
 
   let ffmpeg = spawnFFMPEG(localRtmp);
   if (ffmpeg) {
-    console.log('ffmpeg process created');
+    console.log('ffmpeg process created')
   }
 
-  // Handling binary messages
-  socket.on('stream', (message) => {
+  ws.on('message', (message) => {
     if (Buffer.isBuffer(message)) {
-      ffmpeg.stdin.write(message);
+      ffmpeg.stdin.write(message)
     } else {
       console.error('Received non-binary message');
     }
   });
 
-  socket.on('disconnect', () => {
+  ws.on('close', () => {
     console.log('Client disconnected');
     ffmpeg.stdin.end();
     ffmpeg.stdin = null;
   });
 
-  socket.on('error', (error) => {
-    console.error(`Socket.IO error: ${error.message}`);
+  ws.on('error', (error) => {
+    console.error(`WebSocket error: ${error.message}`);
     ffmpeg.stdin.end();
     ffmpeg.stdin = null;
   });
+
 });
